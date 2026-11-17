@@ -1,0 +1,1 @@
+The first-run gate no longer `grep`s `~/.config/last30days/.env` from the shell. A new `last30days.py first-run-check` command reads the file inside the engine and prints only `1`, `REDDIT_OFFER` or `FIRST_RUN_DETECTED`, so hosts that block shell reads of credential files no longer stop the skill at its first step.

@@ -3176,6 +3176,32 @@ def _run_store_key(name: str) -> int:
     print(json.dumps({"persisted": persisted, "key": name}))
     return 0 if persisted else 1
 
+
+def _run_first_run_check() -> int:
+    """``first-run-check``: print the SKILL.md first-run gate token, never a value.
+
+    Prints ``FIRST_RUN_DETECTED``, ``REDDIT_OFFER`` or ``1``. Reads only the global
+    ``.env`` (``env.CONFIG_FILE``), not process env, project config, Keychain or pass.
+    SKILL.md runs this instead of grepping the ``.env``: a host that blocks shell reads
+    of credential files would otherwise stop the skill at its first step. Only the
+    token reaches stdout.
+    """
+    cfg = env.load_env_file(env.CONFIG_FILE) if env.CONFIG_FILE else {}
+    if not env.is_setup_complete(cfg):
+        token = "FIRST_RUN_DETECTED"
+    elif (
+        os.environ.get("LAST30DAYS_HOST") == env.GROK_BOT_HOST
+        or env.REDDIT_OFFERED_VAR in cfg
+        or env.REDDIT_CONSENT_VAR in cfg
+        or cfg.get("FROM_BROWSER") == "off"
+    ):
+        token = "1"
+    else:
+        token = "REDDIT_OFFER"
+    print(token)
+    return 0
+
+
 SKILL_ONLY_FLAGS = {
     "--agent",
 }
@@ -3832,6 +3858,9 @@ def _main(
             "[last30days] --publish is only supported by the 'library feed' command.\n"
         )
         return 2
+    if command_topic == "first-run-check":
+        # No get_config: the gate reads only the global .env, with no Keychain/pass probes.
+        return _run_first_run_check()
     if command_topic == "setup":
         # Persisting a credential needs no config load (no Keychain / pass
         # probes, no cookie policy), so it dispatches before get_config.

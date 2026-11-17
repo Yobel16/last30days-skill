@@ -129,12 +129,10 @@ For fresh research or discovery, resolve whether the agent session has a usable 
 **FIRST-RUN GATE - after resolving host web search, before topic research:**
 
 ```bash
-if ! grep -q "SETUP_COMPLETE=true" ~/.config/last30days/.env 2>/dev/null; then echo "FIRST_RUN_DETECTED"
-elif [ "$LAST30DAYS_HOST" = grok-bot ] || grep -qE "^(REDDIT_SESSION_OFFERED=|REDDIT_BROWSER_CONSENT=|FROM_BROWSER=off)" ~/.config/last30days/.env; then echo "1"
-else echo "REDDIT_OFFER"; fi
+"${LAST30DAYS_PYTHON}" "${SKILL_DIR}/scripts/last30days.py" first-run-check
 ```
 
-It prints `1`, `REDDIT_OFFER` or `FIRST_RUN_DETECTED`, reading only the global file (not process env, project config, Keychain, pass, or host auth).
+The engine reads the `.env` itself, so the shell never touches a credential file (hosts that guard `.env` reads block a direct `grep`). It prints `1`, `REDDIT_OFFER` or `FIRST_RUN_DETECTED`, reading only the global file (not process env, project config, Keychain, pass, or host auth).
 
 - `1`: setup is complete; continue to the original requested route.
 - `REDDIT_OFFER`: setup is complete; take the Reddit session offer route, then the original route.
